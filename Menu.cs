@@ -1,0 +1,6 @@
+namespace App;
+
+enum Menu
+{
+
+}
