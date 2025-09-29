@@ -1,3 +1,5 @@
+using System.ComponentModel;
+
 namespace App;
 
 public class Person : IUser
@@ -39,16 +41,35 @@ public class Person : IUser
 
   public string Email;
   public string _Password;
+  public List<Items> myItems;
 
 
   public Person(string email, string _password)
   {
     Email = email;
     _Password = _password;
+    myItems = new List<Items>();
   }
 
+
+  public void uploadItem(string name, string description, string id)
+  {
+    Items newItems = new Items(name, description, id);
+    myItems.Add(newItems);
+    Console.Write("\nItem ");
+    paint(ConsoleColor.Green, $"{newItems.Name}", "sameline");
+    Console.Write(" has been successfully uploaded!\n");
+
+
+
+  }
   public bool tryLogin(string email, string password)
   {
     return email == Email && password == _Password;
+  }
+
+  public string getEmail()
+  {
+    return Email;
   }
 }
