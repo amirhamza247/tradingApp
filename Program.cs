@@ -35,12 +35,12 @@ static void paint(ConsoleColor color, string input, string newline = "newline")
 
 /////////^^^^^^^^^ MY SPECIAL METHODS ^^^^^^^^^//////////
 
-List<IUser> allUsers = new List<IUser> { new Person("amir@mail.com", "amir") };
+List<IUser> allUsers = new List<IUser> { new Person("amir", "amir@mail.com", "amir") };
 
-allUsers.Add(new Person("max@mail.com", "max"));
-allUsers.Add(new Person("jakob@mail.com", "jakob"));
-allUsers.Add(new Person("pierino@mail.com", "pierino"));
-allUsers.Add(new Person("muhammed@mail.com", "muhammed"));
+allUsers.Add(new Person("max", "max@mail.com", "max"));
+allUsers.Add(new Person("jakob", "jakob@mail.com", "jakob"));
+allUsers.Add(new Person("pierino", "pierino@mail.com", "pierino"));
+allUsers.Add(new Person("muhammed", "muhammed@mail.com", "muhammed"));
 
 
 IUser activeUser = null;
@@ -121,9 +121,14 @@ while (isRunning)
 
   else
   {
-    paint(ConsoleColor.DarkYellow, "\n-----Welcome to Trade World-----\n");
-    paint(ConsoleColor.DarkYellow, "\nItems avaliable for trading: \n");
-    paint(ConsoleColor.DarkYellow, "\nbanana \nhat\njacket");
+
+    switch (activeUser)
+    {
+      case Person p:
+        print($"\n{p.Name} you have succecfully loged in your account!\n");
+        p.ShowMenu();
+        break;
+    }
 
 
     print("\nWrite logout to exit.\n");
