@@ -43,19 +43,19 @@ allUsers.Add(new Person("max", "max@mail.com", "max"));
 allUsers.Add(new Person("jakob", "jakob@mail.com", "jakob"));
 allUsers.Add(new Person("pierino", "pierino@mail.com", "pierino"));
 allUsers.Add(new Person("muhammed", "muhammed@mail.com", "muhammed"));
-LoadFromCsv("Users.csv");
+LoadUsersFromCsv("users.csv");
+LoadItemFromCsv("items.csv");
 
-void SaveToCsv(string path)
+void SaveUsersToCsv(string path)
 {
   List<string> lines = new List<string>();
   lines.Add("Name,Email,Password");
   foreach (Person currentPerson in allUsers)
   { lines.Add($"{currentPerson.Name},{currentPerson.Email},{currentPerson._Password}"); }
   File.WriteAllLines(path, lines);
-  print("User saved to CSV!");
 }
 
-void LoadFromCsv(string path)
+void LoadUsersFromCsv(string path)
 {
   if (!File.Exists(path)) return;
   string[] lines = File.ReadAllLines(path);
@@ -70,6 +70,56 @@ void LoadFromCsv(string path)
     allUsers.Add(myPerson);
   }
 }
+void SaveItemsToCsv(string path)
+{
+  List<string> lines = new List<string>();
+  lines.Add("Owner,Name,Description");
+  foreach (IUser currrentUser in allUsers)
+  {
+    if (currrentUser is Person p)
+    {
+      foreach (Items currentItem in p.myItemsList)
+      {
+        lines.Add($"{p.Email},{currentItem.Name},{currentItem.Description}");
+      }
+    }
+  }
+  File.WriteAllLines(path, lines);
+}
+
+void LoadItemFromCsv(string path)
+{
+  if (!File.Exists(path)) return;
+  string[] lines = File.ReadAllLines(path);
+
+  for (int i = 1; i < lines.Length; i++)
+  {
+    string[] parts = lines[i].Split(',');
+    string ownerEmail = parts[0];
+    string itemName = parts[1];
+    string itemDescription = parts[2];
+
+    Person owner = null;
+    foreach (IUser person in allUsers)
+    {
+      if (person.getEmail() == ownerEmail)
+      {
+        owner = person as Person;
+        break;
+      }
+    }
+
+    if (owner != null)
+    {
+      Items newItem = new Items(itemName, itemDescription);
+      owner.myItemsList.Add(newItem);
+
+    }
+
+  }
+}
+
+
 
 
 
@@ -191,13 +241,14 @@ while (isRunning)
       print($"Congurgulations! **{userName}** you have succesfully created a Trading account.");
       print("\nPress enter to go to login menu...");
       input();
-      SaveToCsv("Users.csv");
       break;
 
 
     default:
-      print("Please enter a valit option...");
+      print("Please enter a valid option...");
       break;
   }
 
+  SaveUsersToCsv("users.csv");
+  SaveItemsToCsv("items.csv");
 }

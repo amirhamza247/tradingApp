@@ -38,12 +38,14 @@ public class Items
   /////////^^^^^^^^^ MY SPECIAL METHODS ^^^^^^^^^//////////
   public string Name;
   public string Description;
+  // public string Owner;
 
 
   public Items(string name, string description)
   {
     Name = name;
     Description = description;
+    // Owner = owner;
 
   }
 

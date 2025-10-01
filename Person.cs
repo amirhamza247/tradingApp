@@ -87,10 +87,10 @@ public class Person : IUser
 
   public void ShowMyItems()
   {
-    paint(ConsoleColor.DarkYellow, "\nItems in your inventory:\n");
+    paint(ConsoleColor.DarkYellow, "\nItems in your inventory:");
     foreach (Items item in myItemsList)
     {
-      print($"\nName: {item.Name}\nDescription: {item.Description}\n\n\n");
+      print($"\nName: {item.Name}\nDescription: {item.Description}\n\n");
     }
   }
 
@@ -106,8 +106,8 @@ public class Person : IUser
       {
         case Menu.Main:
           try { Console.Clear(); } catch { print("---------------"); }
-          paint(ConsoleColor.DarkYellow, "\n-----Welcome to Trade World-----\n");
-          paint(ConsoleColor.DarkYellow, "\n_____________________\nMain menu:\n[1] Show my Items\n[2] Upload Item\n[3] Trade\n[4] Logout\n_____________________\n");
+          paint(ConsoleColor.DarkYellow, $"\n-----Welcome to Trade World-----");
+          paint(ConsoleColor.DarkYellow, "_____________________\nMain menu:\n[1] Show my Items\n[2] Upload Item\n[3] Trade\n[4] Logout\n_____________________\n");
           paint(ConsoleColor.DarkYellow, "\n► ", "sameline");
 
           switch (input())

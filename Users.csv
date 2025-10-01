@@ -1,4 +1,4 @@
-Person Name,Item Name,Item Description
+Name,Email,Password
 amir,amir@mail.com,amir
 max,max@mail.com,max
 jakob,jakob@mail.com,jakob
@@ -6,3 +6,4 @@ pierino,pierino@mail.com,pierino
 muhammed,muhammed@mail.com,muhammed
 qasim,qasim@mail.com,qasim
 qasim,qasim@mail.com,qasim
+ali,ali@mail.com,ali
