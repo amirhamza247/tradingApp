@@ -38,13 +38,13 @@ public class Items
   /////////^^^^^^^^^ MY SPECIAL METHODS ^^^^^^^^^//////////
   public string Name;
   public string Description;
-  public string Id;
 
-  public Items(string name, string description, string id)
+
+  public Items(string name, string description)
   {
     Name = name;
     Description = description;
-    Id = id;
+
   }
 
 

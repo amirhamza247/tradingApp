@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Globalization;
 using System.Reflection.Metadata;
 
 namespace App;
@@ -42,7 +43,7 @@ public class Person : IUser
   public string Name;
   public string Email;
   public string _Password;
-  public List<Items> myItems;
+  public List<Items> myItemsList;
 
 
   public Person(string name, string email, string _password)
@@ -50,9 +51,14 @@ public class Person : IUser
     Name = name;
     Email = email;
     _Password = _password;
-    myItems = new List<Items>();
+    myItemsList = new List<Items>();
   }
 
+  public interface IUser
+  {
+    public bool tryLogin(string email, string password);
+    public string getEmail();
+  }
   public bool tryLogin(string email, string password)
   {
     return email == Email && password == _Password;
@@ -62,14 +68,33 @@ public class Person : IUser
   {
     return Email;
   }
-  public void uploadItem(string name, string description, string id)
+
+  public void uploadItem()
   {
-    Items newItem = new Items(name, description, id);
-    myItems.Add(newItem);
+    Console.Write("\nWrite the name of your item: ");
+    string itemName = input().ToLower().Trim();
+    Console.Write("\nWrite the description of your item: ");
+    string itemDescription = input().ToLower().Trim();
+
+    Items newItem = new Items(itemName, itemDescription);
+    myItemsList.Add(newItem);
     Console.Write("\nItem ");
     paint(ConsoleColor.Green, $"{newItem.Name}", "sameline");
     Console.Write(" has been successfully uploaded!\n");
   }
+
+
+
+  public void ShowMyItems()
+  {
+    paint(ConsoleColor.DarkYellow, "\nItems in your inventory:\n");
+    foreach (Items item in myItemsList)
+    {
+      print($"\nName: {item.Name}\nDescription: {item.Description}\n\n\n");
+    }
+  }
+
+
 
   public void ShowMenu()
   {
@@ -88,15 +113,12 @@ public class Person : IUser
           switch (input())
           {
             case "1":
-              print("You have no items yet..");
-              print("press enter to continue:");
-              input();
+              activeMenu = Menu.ShowMyItems;
               break;
 
             case "2":
-              print("what do you want to upload...");
-              print("press enter to continue:");
-              input();
+              activeMenu = Menu.UploadItem;
+
               break;
 
             case "3":
@@ -117,9 +139,19 @@ public class Person : IUser
           break;
 
         case Menu.ShowMyItems:
+          ShowMyItems();
+
+          print("\nTo go to main menu press enter...");
+          input();
+          activeMenu = Menu.Main;
           break;
 
         case Menu.UploadItem:
+          uploadItem();
+
+          print("\nTo go to main menu press enter...");
+          input();
+          activeMenu = Menu.Main;
           break;
 
         case Menu.Trade:
