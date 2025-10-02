@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Globalization;
+using System.Linq.Expressions;
 using System.Reflection.Metadata;
 
 namespace App;
@@ -90,7 +91,7 @@ public class Person : IUser
     }
   }
 
-  public void ShowAllTradeItems(List<IUser> allUsers)
+  public void ShowAllTradeItems(List<IUser> allUsers, Person activePerson)
   {
     paint(ConsoleColor.DarkYellow, "\nItems avaliable for trading in trade world:");
     int itemNumber = 1;
@@ -98,17 +99,29 @@ public class Person : IUser
     {
       if (person is Person p && p.myItemsList?.Count > 0)
       {
-        paint(ConsoleColor.DarkYellow, $"\n--- {p.Name}'s Inventory ---");
+        if (p == activePerson)
+        {
+          paint(ConsoleColor.DarkYellow, $"\n--- Your Inventory {p.Name} ---");
+        }
+        else
+        {
+          paint(ConsoleColor.DarkYellow, $"\n--- {p.Name}'s Inventory ---");
+        }
         foreach (Items currentItem in p.myItemsList)
         {
           print($"[{itemNumber}] Name: {currentItem.Name}\nDescription: {currentItem.Description}\n");
           itemNumber++;
         }
-
-        if (itemNumber == 1)
-        { print("There is no items currently avalible for trade."); }
       }
+
+      if (itemNumber == 1)
+      { print("There is no items currently avalible for trade."); }
     }
+  }
+
+  public void SendTradeRequest()
+  {
+
   }
 
 
@@ -170,20 +183,70 @@ public class Person : IUser
           break;
 
         case Menu.Trade:
-          ShowAllTradeItems(allUsers);
+          try { Console.Clear(); } catch { print("---------------"); }
+          paint(ConsoleColor.DarkYellow, "\n--- Trade Menu ---\n\n[1] Show all items avalible for trade \n[2] My requests \n[3] Others requests \n[4] Trade history \n[5] Back to Main Menu\n  ");
+          switch (input())
+          {
+
+            case "1":
+              activeMenu = Menu.TradeMarket;
+              break;
+
+            case "2":
+              activeMenu = Menu.MyRequests;
+              break;
+
+            case "3":
+              activeMenu = Menu.OthersRequest;
+              break;
+
+            case "4":
+              activeMenu = Menu.TradeHistory;
+              break;
+
+            case "5":
+              activeMenu = Menu.Main;
+              break;
+
+            default:
+              print("Please enter a valid option...");
+              break;
+          }
+          break;
+        case Menu.TradeMarket:
+          ShowAllTradeItems(allUsers, this);
+          print("\nTo go to Trade menu, press enter...");
+          input();
+          activeMenu = Menu.Trade;
+          break;
+
+        case Menu.MyRequests:
+          print("\nno requests yet.");
           print("\nTo go to main menu press enter...");
           input();
-          activeMenu = Menu.Main;
+          activeMenu = Menu.Trade;
+          break;
+
+        case Menu.OthersRequest:
+          print("\nno requests yet.");
+          print("\nTo go to main menu press enter...");
+          input();
+          activeMenu = Menu.Trade;
+          break;
+
+        case Menu.TradeHistory:
+          print("\nno trades made yet.");
+          print("\nTo go to main menu press enter...");
+          input();
+          activeMenu = Menu.Trade;
           break;
 
         case Menu.Logout:
           break;
 
         default:
-          print("Please enter a valid option...");
+          print("\nPlease enter a valid option...");
           break;
-
-
       }
     }
 

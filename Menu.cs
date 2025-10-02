@@ -6,5 +6,9 @@ enum Menu
   ShowMyItems,
   UploadItem,
   Trade,
+  TradeMarket,
+  MyRequests,
+  OthersRequest,
+  TradeHistory,
   Logout
 }
