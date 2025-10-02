@@ -4,6 +4,7 @@ using System.Reflection.Metadata;
 
 namespace App;
 
+
 public class Person : IUser
 {
   //////// MY SPECIAL METHODS //////////
@@ -54,11 +55,6 @@ public class Person : IUser
     myItemsList = new List<Items>();
   }
 
-  public interface IUser
-  {
-    public bool tryLogin(string email, string password);
-    public string getEmail();
-  }
   public bool tryLogin(string email, string password)
   {
     return email == Email && password == _Password;
@@ -94,9 +90,30 @@ public class Person : IUser
     }
   }
 
+  public void ShowAllTradeItems(List<IUser> allUsers)
+  {
+    paint(ConsoleColor.DarkYellow, "\nItems avaliable for trading in trade world:");
+    int itemNumber = 1;
+    foreach (IUser person in allUsers)
+    {
+      if (person is Person p && p.myItemsList?.Count > 0)
+      {
+        paint(ConsoleColor.DarkYellow, $"\n--- {p.Name}'s Inventory ---");
+        foreach (Items currentItem in p.myItemsList)
+        {
+          print($"[{itemNumber}] Name: {currentItem.Name}\nDescription: {currentItem.Description}\n");
+          itemNumber++;
+        }
+
+        if (itemNumber == 1)
+        { print("There is no items currently avalible for trade."); }
+      }
+    }
+  }
 
 
-  public void ShowMenu()
+
+  public void ShowMenu(List<IUser> allUsers)
   {
     Menu activeMenu = new Menu();
     bool personLogedin = true;
@@ -122,9 +139,7 @@ public class Person : IUser
               break;
 
             case "3":
-              print("You have no items to Trade yet..");
-              print("press enter to continue:");
-              input();
+              activeMenu = Menu.Trade;
               break;
 
             case "4":
@@ -155,6 +170,10 @@ public class Person : IUser
           break;
 
         case Menu.Trade:
+          ShowAllTradeItems(allUsers);
+          print("\nTo go to main menu press enter...");
+          input();
+          activeMenu = Menu.Main;
           break;
 
         case Menu.Logout:

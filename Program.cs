@@ -203,7 +203,8 @@ while (isRunning)
             }
             if (isLoggedin == false)
             {
-              paint(ConsoleColor.Red, "\nIncorrect Password or Email. Press enter to try again...\n");
+              paint(ConsoleColor.Red, "\nIncorrect Password or Email. \nPress enter to try again...\n");
+
               input();
             }
           } while (!isLoggedin);
@@ -216,7 +217,7 @@ while (isRunning)
           {
             case Person p:
               print($"\n{p.Name} you have succecfully loged in your account!\n");
-              p.ShowMenu();
+              p.ShowMenu(allUsers);
               break;
           }
           activeUser = null;
