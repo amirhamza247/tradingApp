@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Globalization;
 using System.Linq.Expressions;
 using System.Reflection.Metadata;
+using System.Security.Cryptography.X509Certificates;
 
 namespace App;
 
@@ -113,20 +114,81 @@ public class Person : IUser
           itemNumber++;
         }
       }
-
-      if (itemNumber == 1)
-      { print("There is no items currently avalible for trade."); }
     }
+    if (itemNumber == 1)
+    { print("There is no items currently avalible for trade."); }
   }
 
-  public void SendTradeRequest()
+  public void SelectAndSendRequest(List<IUser> allUsers, List<TradeRequest> allRequests)
   {
+    if (myItemsList.Count == 0)
+    {
+      paint(ConsoleColor.Red, "\nYou must upload at least one item before sending a trade request");
+      return;
+    }
+    paint(ConsoleColor.DarkYellow, "Write **number** of the item you want to trade with: ", "sameline");
+    if (!int.TryParse(input(), out int targetItemNumber))
+    {
+      print("Invalid item number.");
+      return;
+    }
+
+    int currentItemCount = 1;
+    Person targetOwner = null;
+    Items targetItem = null;
+
+    foreach (IUser currentPerson in allUsers)
+    {
+      if (currentPerson is Person p && p.myItemsList.Count > 0)
+      {
+        foreach (Items item in p.myItemsList)
+        {
+          if (currentItemCount == targetItemNumber)
+          {
+            if (p == this)
+            {
+              paint(ConsoleColor.Red, "\nYou cannot trade for your own item. Please select an item from another user.");
+              return;
+            }
+            targetOwner = p;
+            targetItem = item;
+            break;
+          }
+          currentItemCount++;
+        }
+      }
+      if (targetItem != null) { break; }
+    }
+
+    if (targetItem == null)
+    {
+      print("Item not found...");
+      return;
+    }
+
+    Console.Write("\nYou selected: ");
+    paint(ConsoleColor.DarkYellow, $"{targetItem.Name} ", "sameline");
+    paint(ConsoleColor.DarkYellow, $"\n\nNow, which of your items will you offer? Enter 1-{myItemsList.Count}: ", "sameline");
+    if (!int.TryParse(input(), out int offerIndex) || offerIndex < 1 || offerIndex > myItemsList.Count)
+    {
+      print("\nInvalid offer item number."); return;
+    }
+
+    Items offerItem = myItemsList[offerIndex - 1];
+
+    TradeRequest request = new TradeRequest(requester: this, requesterItem: offerItem, owner: targetOwner, ownerItem: targetItem);
+
+    allRequests.Add(request);
+    Console.Write("\nTrade request sent! Offering your:");
+    paint(ConsoleColor.DarkYellow, $" [{offerItem.Name}] ", "sameline");
+    Console.Write("for");
+    paint(ConsoleColor.DarkYellow, $" [{targetItem.Name}]");
 
   }
 
 
 
-  public void ShowMenu(List<IUser> allUsers)
+  public void ShowMenu(List<IUser> allUsers, List<TradeRequest> allRequests)
   {
     Menu activeMenu = new Menu();
     bool personLogedin = true;
@@ -214,13 +276,17 @@ public class Person : IUser
           }
           break;
         case Menu.TradeMarket:
+          try { Console.Clear(); } catch { print("---------------"); }
           ShowAllTradeItems(allUsers, this);
+          SelectAndSendRequest(allUsers, allRequests);
+
           print("\nTo go to Trade menu, press enter...");
           input();
           activeMenu = Menu.Trade;
           break;
 
         case Menu.MyRequests:
+          try { Console.Clear(); } catch { print("---------------"); }
           print("\nno requests yet.");
           print("\nTo go to main menu press enter...");
           input();
@@ -228,6 +294,7 @@ public class Person : IUser
           break;
 
         case Menu.OthersRequest:
+          try { Console.Clear(); } catch { print("---------------"); }
           print("\nno requests yet.");
           print("\nTo go to main menu press enter...");
           input();
@@ -235,6 +302,7 @@ public class Person : IUser
           break;
 
         case Menu.TradeHistory:
+          try { Console.Clear(); } catch { print("---------------"); }
           print("\nno trades made yet.");
           print("\nTo go to main menu press enter...");
           input();

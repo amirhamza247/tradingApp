@@ -32,20 +32,18 @@ public class Items
     }
   }
 
-  //this is to help vs code with debugging.
-  // try { Console.Clear(); } catch { Console.WriteLine("\n------------------\n");}
-
   /////////^^^^^^^^^ MY SPECIAL METHODS ^^^^^^^^^//////////
+  /// 
+
+
   public string Name;
   public string Description;
-  // public string Owner;
 
 
   public Items(string name, string description)
   {
     Name = name;
     Description = description;
-    // Owner = owner;
 
   }
 

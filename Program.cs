@@ -37,8 +37,11 @@ static void paint(ConsoleColor color, string input, string newline = "newline")
 
 /////////^^^^^^^^^ MY UTILITY METHODS ^^^^^^^^^//////////
 
-List<IUser> allUsers = new List<IUser> { new Person("amir", "amir@mail.com", "amir") };
+List<IUser> allUsers = new List<IUser>();
+List<TradeRequest> allRequests = new List<TradeRequest>();
 
+
+allUsers.Add(new Person("amir", "amir@mail.com", "amir"));
 allUsers.Add(new Person("max", "max@mail.com", "max"));
 allUsers.Add(new Person("jakob", "jakob@mail.com", "jakob"));
 allUsers.Add(new Person("pierino", "pierino@mail.com", "pierino"));
@@ -217,7 +220,7 @@ while (isRunning)
           {
             case Person p:
               print($"\n{p.Name} you have succecfully loged in your account!\n");
-              p.ShowMenu(allUsers);
+              p.ShowMenu(allUsers, allRequests);
               break;
           }
           activeUser = null;
