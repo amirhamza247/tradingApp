@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.ComponentModel;
 using System.Globalization;
 using System.Linq.Expressions;
@@ -7,7 +8,7 @@ using System.Security.Cryptography.X509Certificates;
 namespace App;
 
 
-public class Person : IUser
+public class Person
 {
   //////// MY SPECIAL METHODS //////////
 
@@ -92,13 +93,13 @@ public class Person : IUser
     }
   }
 
-  public void ShowAllTradeItems(List<IUser> allUsers, Person activePerson)
+  public void ShowAllTradeItems(List<Person> allUsers, Person activePerson)
   {
     paint(ConsoleColor.DarkYellow, "\nItems avaliable for trading in trade world:");
-    int itemNumber = 1;
-    foreach (IUser person in allUsers)
+    int userIndex = 1;
+    foreach (Person p in allUsers)
     {
-      if (person is Person p && p.myItemsList?.Count > 0)
+      if (p.myItemsList?.Count > 0)
       {
         if (p == activePerson)
         {
@@ -106,89 +107,251 @@ public class Person : IUser
         }
         else
         {
-          paint(ConsoleColor.DarkYellow, $"\n--- {p.Name}'s Inventory ---");
+          paint(ConsoleColor.DarkYellow, $"\n--- [{userIndex}] {p.Name}'s Inventory ---");
         }
+        int localItemNumber = 1;
+
         foreach (Items currentItem in p.myItemsList)
         {
-          print($"[{itemNumber}] Name: {currentItem.Name}\nDescription: {currentItem.Description}\n");
-          itemNumber++;
+          print($"[{localItemNumber}] Name: {currentItem.Name}\nDescription: {currentItem.Description}\n");
+          localItemNumber++;
         }
+
       }
     }
-    if (itemNumber == 1)
+    if (userIndex == 1 && activePerson.myItemsList.Count == 0)
     { print("There is no items currently avalible for trade."); }
   }
+  /*   public void ShowAllTradeItems(List<Person> allUsers, Person activePerson)
+    {
+      paint(ConsoleColor.DarkYellow, "\nItems avaliable for trading in trade world:");
+      int itemNumber = 1;
+      foreach (Person person in allUsers)
+      {
+        if (person is Person p && p.myItemsList?.Count > 0)
+        {
+          if (p == activePerson)
+          {
+            paint(ConsoleColor.DarkYellow, $"\n--- Your Inventory {p.Name} ---");
+          }
+          else
+          {
+            paint(ConsoleColor.DarkYellow, $"\n--- {p.Name}'s Inventory ---");
+          }
+          foreach (Items currentItem in p.myItemsList)
+          {
+            print($"[{itemNumber}] Name: {currentItem.Name}\nDescription: {currentItem.Description}\n");
+            itemNumber++;
+          }
+        }
+      }
+      if (itemNumber == 1)
+      { print("There is no items currently avalible for trade."); }
+    } */
 
-  public void SelectAndSendRequest(List<IUser> allUsers, List<TradeRequest> allRequests)
+  public void SelectAndSendRequest(List<Person> allUsers, List<TradeRequest> allRequests, Person active_user)
   {
     if (myItemsList.Count == 0)
     {
       paint(ConsoleColor.Red, "\nYou must upload at least one item before sending a trade request");
       return;
     }
-    paint(ConsoleColor.DarkYellow, "Write **number** of the item you want to trade with: ", "sameline");
-    if (!int.TryParse(input(), out int targetItemNumber))
+
+
+    paint(ConsoleColor.DarkYellow, "\n--- Trade Selection --\n");
+    paint(ConsoleColor.DarkYellow, "Write **number** for the item you want to trade with: ", "sameline");
+    if (!int.TryParse(input(), out int targetUserNumber))
     {
       print("Invalid item number.");
       return;
     }
 
-    int currentItemCount = 1;
-    Person targetOwner = null;
-    Items targetItem = null;
 
-    foreach (IUser currentPerson in allUsers)
+    Person targetOwner = null;
+    int currentUserIndex = 1;
+
+
+    foreach (Person p in allUsers)
     {
-      if (currentPerson is Person p && p.myItemsList.Count > 0)
+      if (p != this && p.myItemsList?.Count > 0)
       {
-        foreach (Items item in p.myItemsList)
+        if (currentUserIndex == targetUserNumber)
         {
-          if (currentItemCount == targetItemNumber)
-          {
-            if (p == this)
-            {
-              paint(ConsoleColor.Red, "\nYou cannot trade for your own item. Please select an item from another user.");
-              return;
-            }
-            targetOwner = p;
-            targetItem = item;
-            break;
-          }
-          currentItemCount++;
+          targetOwner = p;
+          break;
         }
       }
-      if (targetItem != null) { break; }
+
     }
 
-    if (targetItem == null)
+    if (targetOwner == null)
     {
-      print("Item not found...");
+      print("User not found or user number out of range..");
+    }
+
+    int maxItemIndex = targetOwner.myItemsList.Count;
+    paint(ConsoleColor.DarkYellow, $"\nYou selected {targetOwner.Name}'s inventory.\nNow, which of their items (1-{maxItemIndex}) do you want to trade for? ");
+    if (!int.TryParse(input(), out int targetItemIndex) || targetItemIndex < 1 || targetItemIndex > maxItemIndex)
+    {
+      paint(ConsoleColor.Red, "Invalid item number.");
       return;
     }
+    Items targetItem = targetOwner.myItemsList[targetItemIndex - 1];
 
-    Console.Write("\nYou selected: ");
-    paint(ConsoleColor.DarkYellow, $"{targetItem.Name} ", "sameline");
-    paint(ConsoleColor.DarkYellow, $"\n\nNow, which of your items will you offer? Enter 1-{myItemsList.Count}: ", "sameline");
+    Console.Write("\nYou selected :");
+    paint(ConsoleColor.DarkYellow, $"{targetItem.Name}", "sameline");
+    paint(ConsoleColor.DarkYellow, $"\n\nNow, which of you items will you offer? Enter 1-{myItemsList.Count}: ");
+
     if (!int.TryParse(input(), out int offerIndex) || offerIndex < 1 || offerIndex > myItemsList.Count)
     {
-      print("\nInvalid offer item number."); return;
+      paint(ConsoleColor.Red, "Invalid offer item number."); return;
     }
-
     Items offerItem = myItemsList[offerIndex - 1];
 
     TradeRequest request = new TradeRequest(requester: this, requesterItem: offerItem, owner: targetOwner, ownerItem: targetItem);
-
     allRequests.Add(request);
+
     Console.Write("\nTrade request sent! Offering your:");
     paint(ConsoleColor.DarkYellow, $" [{offerItem.Name}] ", "sameline");
     Console.Write("for");
     paint(ConsoleColor.DarkYellow, $" [{targetItem.Name}]");
+    Console.Write("from");
+    paint(ConsoleColor.DarkYellow, $" [{targetOwner.Name}]");
 
   }
 
 
+  public void ProcessRequest(TradeRequest selectedRequest, List<TradeRequest> allRequests)
+  {
+    try { Console.Clear(); } catch { print("---------------"); }
 
-  public void ShowMenu(List<IUser> allUsers, List<TradeRequest> allRequests)
+    if (selectedRequest.Status != TradeStatus.Pending || selectedRequest.Owner != this)
+    {
+      paint(ConsoleColor.Red, "Cannot process this request (either status is not pending or you are not the owner).");
+      print("Press enter to go to previous menu...");
+      input();
+      return;
+    }
+
+    paint(ConsoleColor.DarkYellow, "\nPlease select an option:");
+    paint(ConsoleColor.DarkYellow, "\n[1] Accept \n[2] Deny \n[3] Previous menu");
+    switch (input())
+    {
+      case "1":
+        selectedRequest.Status = TradeStatus.Accepted;
+        paint(ConsoleColor.Green, "Let's gooooo, Trade completeted succesfully!");
+
+        Person requester = selectedRequest.Requester;
+
+        this.myItemsList.Remove(selectedRequest.OwnerItem);
+        requester.myItemsList.Add(selectedRequest.OwnerItem);
+
+
+        requester.myItemsList.Remove(selectedRequest.RequesterItem);
+        this.myItemsList.Add(selectedRequest.RequesterItem);
+
+        Items TadeItem1 = selectedRequest.OwnerItem;
+        Items TadeItem2 = selectedRequest.RequesterItem;
+
+        foreach (TradeRequest request in allRequests)
+        {
+
+          if (request.Status == TradeStatus.Pending && request != selectedRequest)
+          {
+            if (request.OwnerItem == TadeItem1 || request.OwnerItem == TadeItem2 || request.RequesterItem == TadeItem1 || request.RequesterItem == TadeItem2)
+            {
+              request.Status = TradeStatus.Denied;
+              paint(ConsoleColor.Red, $"\nConflicting request denined:  {request.Requester.Name} for {request.OwnerItem.Name}");
+            }
+          }
+        }
+
+
+        print("Press enter to go to previous menu...");
+        input();
+        break;
+
+      case "2":
+        selectedRequest.Status = TradeStatus.Denied;
+        paint(ConsoleColor.Red, "Trade requst denied.");
+
+        print("Press enter to go to previous menu...");
+        input();
+        break;
+
+      case "3":
+        break;
+
+      default:
+        print("Invalid selection, Press enter to go to previous menu...");
+        print("Press enter to go to previous menu...");
+        input();
+        break;
+    }
+    return;
+  }
+
+
+
+  public void ShowIncomingRequests(List<TradeRequest> allRequests, Person activeUser)
+  {
+    try { Console.Clear(); } catch { print("---------------"); }
+
+    Person owner = this;
+    List<TradeRequest> pendingRequestsToMe = new List<TradeRequest>();
+    foreach (TradeRequest request in allRequests)
+    {
+      if (request.Owner == owner && request.Status == TradeStatus.Pending)
+      {
+        pendingRequestsToMe.Add(request);
+      }
+    }
+    if (pendingRequestsToMe.Count == 0)
+    {
+      print("You have no pending trade requests...");
+      print("\nPress enter to go to previous menu.");
+      input();
+      return;
+    }
+
+    paint(ConsoleColor.DarkYellow, $"\n --- Incoming Trade Request ({pendingRequestsToMe.Count} pedning) ---");
+
+    int requestNumber = 1;
+    foreach (TradeRequest request in pendingRequestsToMe)
+    {
+      print($"\n[{requestNumber}] From: {request.Requester.Name}");
+      print($"    Wants: {request.OwnerItem.Name} (your item)");
+      print($"    Offers: {request.RequesterItem.Name} ");
+      requestNumber++;
+    }
+
+    paint(ConsoleColor.DarkYellow, "\nWrite the *number* of the request you want to ACCEPt or Deny, or press enter to go back: ", "sameline");
+    string inputChoice = input();
+
+    if (string.IsNullOrWhiteSpace(inputChoice)) return;
+
+    if (int.TryParse(inputChoice, out int choiceIndex) && choiceIndex >= 1 && choiceIndex <= pendingRequestsToMe.Count)
+    {
+      TradeRequest selectedRequest = pendingRequestsToMe[choiceIndex - 1];
+      ProcessRequest(selectedRequest, allRequests);
+
+    }
+    else
+    {
+      paint(ConsoleColor.Red, "Invalid selection..");
+      input();
+    }
+  }
+
+
+  public void ShowOutgoingRequests()
+  {
+    return;
+  }
+
+
+
+  public void ShowMenu(List<Person> allUsers, List<TradeRequest> allRequests)
   {
     Menu activeMenu = new Menu();
     bool personLogedin = true;
@@ -229,6 +392,8 @@ public class Person : IUser
           break;
 
         case Menu.ShowMyItems:
+          try { Console.Clear(); } catch { print("---------------"); }
+
           ShowMyItems();
 
           print("\nTo go to main menu press enter...");
@@ -278,9 +443,9 @@ public class Person : IUser
         case Menu.TradeMarket:
           try { Console.Clear(); } catch { print("---------------"); }
           ShowAllTradeItems(allUsers, this);
-          SelectAndSendRequest(allUsers, allRequests);
+          SelectAndSendRequest(allUsers, allRequests, this);
 
-          print("\nTo go to Trade menu, press enter...");
+          paint(ConsoleColor.DarkYellow, "\nTo go to Trade menu, press enter...");
           input();
           activeMenu = Menu.Trade;
           break;
@@ -295,9 +460,8 @@ public class Person : IUser
 
         case Menu.OthersRequest:
           try { Console.Clear(); } catch { print("---------------"); }
-          print("\nno requests yet.");
-          print("\nTo go to main menu press enter...");
-          input();
+          ShowIncomingRequests(allRequests, this);
+
           activeMenu = Menu.Trade;
           break;
 

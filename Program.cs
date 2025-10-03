@@ -37,7 +37,7 @@ static void paint(ConsoleColor color, string input, string newline = "newline")
 
 /////////^^^^^^^^^ MY UTILITY METHODS ^^^^^^^^^//////////
 
-List<IUser> allUsers = new List<IUser>();
+List<Person> allUsers = new List<Person>();
 List<TradeRequest> allRequests = new List<TradeRequest>();
 
 
@@ -77,7 +77,7 @@ void SaveItemsToCsv(string path)
 {
   List<string> lines = new List<string>();
   lines.Add("Owner,Name,Description");
-  foreach (IUser currrentUser in allUsers)
+  foreach (Person currrentUser in allUsers)
   {
     if (currrentUser is Person p)
     {
@@ -103,7 +103,7 @@ void LoadItemFromCsv(string path)
     string itemDescription = parts[2];
 
     Person owner = null;
-    foreach (IUser person in allUsers)
+    foreach (Person person in allUsers)
     {
       if (person.getEmail() == ownerEmail)
       {
@@ -126,7 +126,7 @@ void LoadItemFromCsv(string path)
 
 
 
-IUser activeUser = null;
+Person activeUser = null;
 bool isRunning = true;
 while (isRunning)
 {
@@ -161,7 +161,7 @@ while (isRunning)
               else
               {
                 bool emailExsist = false;
-                foreach (IUser person in allUsers)
+                foreach (Person person in allUsers)
                 {
                   if (person.getEmail() == email)
                   {
@@ -195,7 +195,7 @@ while (isRunning)
 
             try { Console.Clear(); } catch { print("\n---------------\n"); }
 
-            foreach (IUser person in allUsers)
+            foreach (Person person in allUsers)
             {
               if (person.tryLogin(email, password))
               {
