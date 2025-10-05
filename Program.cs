@@ -1,10 +1,13 @@
-﻿using System.Net.Mail;
+﻿using System.Buffers;
+using System.Globalization;
+using System.Net.Mail;
+using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
 using App;
 
 //////// MY UTILITY METHODS //////////
 
-//this methods converts Readline and Writeline to Print and Input.
+//activeUser methods converts Readline and Writeline to Print and Input.
 static void print(string input)
 {
   Console.WriteLine(input);
@@ -15,7 +18,7 @@ static string input()
 }
 
 
-//this method gives text in console color.
+//activeUser method gives text in console color.
 static void paint(ConsoleColor color, string input, string newline = "newline")
 {
   if (newline == "newline")
@@ -32,7 +35,7 @@ static void paint(ConsoleColor color, string input, string newline = "newline")
   }
 }
 
-//this is to help vs code with debugging.
+//activeUser is to help vs code with debugging.
 // try { Console.Clear(); } catch { Console.WriteLine("\n------------------\n");}
 
 /////////^^^^^^^^^ MY UTILITY METHODS ^^^^^^^^^//////////
@@ -40,14 +43,15 @@ static void paint(ConsoleColor color, string input, string newline = "newline")
 List<Person> allUsers = new List<Person>();
 List<TradeRequest> allRequests = new List<TradeRequest>();
 
+LoadUsersFromCsv("users.csv");
+LoadItemFromCsv("items.csv");
+
 
 allUsers.Add(new Person("amir", "amir@mail.com", "amir"));
 allUsers.Add(new Person("max", "max@mail.com", "max"));
 allUsers.Add(new Person("jakob", "jakob@mail.com", "jakob"));
 allUsers.Add(new Person("pierino", "pierino@mail.com", "pierino"));
 allUsers.Add(new Person("muhammed", "muhammed@mail.com", "muhammed"));
-LoadUsersFromCsv("users.csv");
-LoadItemFromCsv("items.csv");
 
 void SaveUsersToCsv(string path)
 {
@@ -76,16 +80,20 @@ void LoadUsersFromCsv(string path)
 void SaveItemsToCsv(string path)
 {
   List<string> lines = new List<string>();
-  lines.Add("Owner,Name,Description");
-  foreach (Person currrentUser in allUsers)
+  lines.Add("OwnerEamil,Name,Description");
+  foreach (Person user in allUsers)
   {
-    if (currrentUser is Person p)
+    if (user.myItemsList != null)
     {
-      foreach (Items currentItem in p.myItemsList)
+      foreach (Items item in user.myItemsList)
       {
-        lines.Add($"{p.Email},{currentItem.Name},{currentItem.Description}");
+
+        lines.Add($"{user.Email},{item.Name},{item.Description}");
+
       }
+
     }
+
   }
   File.WriteAllLines(path, lines);
 }
@@ -126,12 +134,14 @@ void LoadItemFromCsv(string path)
 
 
 
+
+
 Person activeUser = null;
 bool isRunning = true;
 while (isRunning)
 {
   try { Console.Clear(); } catch { print("\n---------------\n"); }
-  paint(ConsoleColor.DarkYellow, "\nTo be able to trade you must have an account.\n\n[1] Login\n[2] Creat an account\n");
+  paint(ConsoleColor.DarkYellow, "\nTo be able to trade you must have an account.\n\n[1] Login\n[2] Creat an account\n[3] Exit");
 
   switch (input())
   {
@@ -220,7 +230,467 @@ while (isRunning)
           {
             case Person p:
               print($"\n{p.Name} you have succecfully loged in your account!\n");
-              p.ShowMenu(allUsers, allRequests);
+              {
+                Menu activeMenu = new Menu();
+                bool personLogedin = true;
+                while (personLogedin)
+                {
+                  switch (activeMenu)
+                  {
+                    case Menu.Main:
+                      try { Console.Clear(); } catch { print("---------------"); }
+                      paint(ConsoleColor.DarkYellow, $"\n-----Welcome to Trade World-----");
+                      paint(ConsoleColor.DarkYellow, "_____________________\nMain menu:\n[1] Show my Items\n[2] Upload Item\n[3] Trade\n[4] Logout\n_____________________\n");
+                      paint(ConsoleColor.DarkYellow, "\n► ", "sameline");
+
+                      switch (input())
+                      {
+                        case "1":
+                          activeMenu = Menu.ShowMyItems;
+                          break;
+
+                        case "2":
+                          activeMenu = Menu.UploadItem;
+
+                          break;
+
+                        case "3":
+                          activeMenu = Menu.Trade;
+                          break;
+
+                        case "4":
+                          personLogedin = false;
+                          break;
+
+                        default:
+                          print("please enter a valid option...");
+                          break;
+
+                      }
+                      break;
+
+                    case Menu.ShowMyItems:
+                      try { Console.Clear(); } catch { print("---------------"); }
+
+                      paint(ConsoleColor.DarkYellow, "\nItems in your inventory:");
+                      if (activeUser.myItemsList.Count == 0)
+                      {
+                        print("Inventory Empty!");
+                      }
+                      else
+                      {
+                        foreach (Items item in activeUser.myItemsList)
+                        {
+                          print($"\n       Name: {item.Name}\nDescription: {item.Description}\n\n");
+                        }
+                      }
+                      print("\nTo go to main menu press enter...");
+                      input();
+                      activeMenu = Menu.Main;
+                      break;
+
+                    case Menu.UploadItem:
+                      try { Console.Clear(); } catch { print("---------------"); }
+                      Console.Write("\nWrite the name of your item: ");
+                      string itemName = input().ToLower().Trim().Replace(",", "");
+                      Console.Write("\nWrite the description of your item: ");
+                      string itemDescription = input().ToLower().Trim().Replace(",", "");
+
+                      if (string.IsNullOrEmpty(itemName) || string.IsNullOrEmpty(itemDescription))
+                      {
+                        paint(ConsoleColor.Red, "\nItem name and description cannot be empty. Item upload failed!");
+
+                      }
+                      else
+                      {
+                        Items newItem = new Items(itemName, itemDescription);
+                        activeUser.myItemsList.Add(newItem);
+                        Console.Write("\nItem ");
+                        paint(ConsoleColor.Green, $"{newItem.Name}", "sameline");
+                        Console.Write(" has been successfully uploaded!\n");
+
+                      }
+
+
+                      print("\nTo go to main menu press enter...");
+                      input();
+                      activeMenu = Menu.Main;
+                      break;
+
+                    case Menu.Trade:
+                      try { Console.Clear(); } catch { print("---------------"); }
+                      paint(ConsoleColor.DarkYellow, "\n--- Trade Menu ---\n\n[1] Show all items avalible for trade \n[2] My requests \n[3] Others requests \n[4] Trade history \n[5] Back to Main Menu\n  ");
+                      paint(ConsoleColor.DarkYellow, "\n► ", "sameline");
+                      switch (input())
+                      {
+
+                        case "1":
+                          activeMenu = Menu.TradeMarket;
+                          break;
+
+                        case "2":
+                          activeMenu = Menu.MyRequests;
+                          break;
+
+                        case "3":
+                          activeMenu = Menu.OthersRequest;
+                          break;
+
+                        case "4":
+                          activeMenu = Menu.TradeHistory;
+                          break;
+
+                        case "5":
+                          activeMenu = Menu.Main;
+                          break;
+
+                        case "6":
+                          activeMenu = Menu.Logout;
+                          break;
+
+                        default:
+                          print("Please enter a valid option...");
+                          break;
+                      }
+                      break;
+                    case Menu.TradeMarket:
+                      try { Console.Clear(); } catch { print("---------------"); }
+                      paint(ConsoleColor.DarkYellow, "\nItems avaliable for trading in trade world:");
+
+                      paint(ConsoleColor.DarkYellow, $"\n--- Your Inventory {activeUser.Name} ---");
+                      int localItemNumberActiveUser = 1;
+                      foreach (Items currentItem in activeUser.myItemsList)
+                      {
+                        Console.ForegroundColor = ConsoleColor.DarkGreen;
+                        print($"[{localItemNumberActiveUser}]    Name: {currentItem.Name}\nDescription: {currentItem.Description}\n");
+                        localItemNumberActiveUser++;
+                        Console.ResetColor();
+                      }
+
+
+                      int userIndex;
+                      List<Person> tradeableUsers = new List<Person>();
+
+                      foreach (Person otherUser in allUsers)
+                      {
+                        if (otherUser.myItemsList?.Count > 0 && otherUser != activeUser)
+                        {
+                          paint(ConsoleColor.DarkYellow, $"\n--- [{tradeableUsers.Count + 1}] {otherUser.Name}'s Inventory ---");
+                          tradeableUsers.Add(otherUser);
+                          int localItemNumber = 1;
+                          foreach (Items currentItem in otherUser.myItemsList)
+                          {
+                            print($"[{localItemNumber}]    Name: {currentItem.Name}\nDescription: {currentItem.Description}\n");
+                            localItemNumber++;
+                          }
+                        }
+
+                      }
+
+                      userIndex = tradeableUsers.Count;
+                      if (tradeableUsers.Count == 0 && activeUser.myItemsList.Count == 0)
+                      { print("There are no items currently avalible for trade."); }
+
+
+                      if (activeUser.myItemsList.Count == 0)
+                      {
+                        paint(ConsoleColor.Red, "\nYou must upload at least one item before sending a trade request");
+                        print("\nPress enter to go to previous menu...");
+                        activeMenu = Menu.Trade;
+                        break;
+                      }
+                      if (tradeableUsers.Count == 0)
+                      {
+                        paint(ConsoleColor.Red, "\nNo other users have items to trade right now.");
+                        print("\nPress enter to go to previous menu...");
+                        input();
+                        activeMenu = Menu.Trade;
+                        break;
+                      }
+
+
+                      paint(ConsoleColor.DarkYellow, "\n--- Trade Selection --\n");
+                      paint(ConsoleColor.DarkYellow, $"Write **number** for the person you want to trade with (1-{userIndex}): ", "sameline");
+                      if (!int.TryParse(input(), out int targetUserNumber) || targetUserNumber > userIndex || targetUserNumber < 1)
+                      {
+
+                        paint(ConsoleColor.Red, "\nInvalid person number.");
+                        print("\nPress enter to continue");
+                        input();
+                        activeMenu = Menu.Trade;
+                        break;
+                      }
+
+
+                      Person targetOwner = tradeableUsers[targetUserNumber - 1];
+
+                      int maxItemIndex = targetOwner.myItemsList.Count;
+                      paint(ConsoleColor.DarkYellow, $"\nYou selected {targetOwner.Name}'s inventory.\nNow, which of their items (1-{maxItemIndex}) do you want to trade for:  ", "sameline");
+                      if (!int.TryParse(input(), out int targetItemIndex) || targetItemIndex < 1 || targetItemIndex > maxItemIndex)
+                      {
+                        paint(ConsoleColor.Red, "\nInvalid item number.");
+                        print("\nPress enter to continue");
+                        input();
+                        activeMenu = Menu.TradeMarket;
+                        break;
+                      }
+                      Items targetItem = targetOwner.myItemsList[targetItemIndex - 1];
+
+                      Console.Write("\nYou selected :");
+                      paint(ConsoleColor.DarkYellow, $"{targetItem.Name}", "sameline");
+                      paint(ConsoleColor.DarkYellow, $"\n\nNow, which of you items will you offer? Enter 1-{activeUser.myItemsList.Count}: ");
+
+                      if (!int.TryParse(input(), out int offerIndex) || offerIndex < 1 || offerIndex > activeUser.myItemsList.Count)
+                      {
+                        paint(ConsoleColor.Red, "Invalid offer item number.");
+                        print("\nPress enter to return to the Trade Market...");
+                        input();
+                        activeMenu = Menu.TradeMarket;
+                        break;
+                      }
+                      Items offerItem = activeUser.myItemsList[offerIndex - 1];
+
+                      TradeRequest request = new TradeRequest(requester: activeUser, requesterItem: offerItem, owner: targetOwner, ownerItem: targetItem);
+                      allRequests.Add(request);
+
+                      Console.Write("\nTrade request sent! Offering your:");
+                      paint(ConsoleColor.DarkYellow, $" [{offerItem.Name}] ", "sameline");
+                      Console.Write("for");
+                      paint(ConsoleColor.DarkYellow, $" [{targetItem.Name}]");
+                      Console.Write("from");
+                      paint(ConsoleColor.DarkYellow, $" [{targetOwner.Name}]");
+
+
+
+
+
+                      paint(ConsoleColor.DarkYellow, "\nTo go to Trade menu, press enter...");
+                      input();
+                      activeMenu = Menu.Trade;
+                      break;
+
+                    case Menu.MyRequests:
+                      try { Console.Clear(); } catch { print("---------------"); }
+                      List<TradeRequest> myPendingRequests = new List<TradeRequest>();
+                      foreach (TradeRequest myRequests in allRequests)
+                      {
+                        if (myRequests.Requester == activeUser && myRequests.Status == TradeStatus.Pending)
+                        {
+                          myPendingRequests.Add(myRequests);
+                        }
+
+                      }
+                      if (myPendingRequests.Count == 0)
+                      {
+                        print("\nYou have no pending requests sent by you.");
+                      }
+                      else
+                      {
+                        int outgoingReqIndex = 1;
+                        paint(ConsoleColor.DarkYellow, $"\n--- My pending outgoing requests ({myPendingRequests.Count}) ---");
+                        foreach (TradeRequest pendingRequest in myPendingRequests)
+                        {
+                          print($"\n[{outgoingReqIndex}] Request to {pendingRequest.Owner.Name}: Offering {pendingRequest.RequesterItem.Name} for their {pendingRequest.OwnerItem.Name}. \nStatus: {pendingRequest.Status}");
+                          outgoingReqIndex++;
+                        }
+                      }
+
+
+                      print("\nTo go to main menu press enter...");
+                      input();
+                      activeMenu = Menu.Trade;
+                      break;
+
+                    case Menu.OthersRequest:
+                      try { Console.Clear(); } catch { print("---------------"); }
+
+                      List<TradeRequest> pendingRequestsToMe = new List<TradeRequest>();
+                      foreach (TradeRequest currentRequest in allRequests)
+                      {
+                        if (currentRequest.Owner == activeUser && currentRequest.Status == TradeStatus.Pending)
+                        {
+                          pendingRequestsToMe.Add(currentRequest);
+                        }
+                      }
+                      if (pendingRequestsToMe.Count == 0)
+                      {
+                        print("You have no pending trade requests...");
+                        print("\nPress enter to go to previous menu.");
+                        input();
+                        activeMenu = Menu.Trade;
+                        break;
+                      }
+
+                      paint(ConsoleColor.DarkYellow, $"\n --- Incoming Trade Request ({pendingRequestsToMe.Count} pedning) ---");
+
+                      int requestNumber = 1;
+                      foreach (TradeRequest pendingRequest in pendingRequestsToMe)
+                      {
+                        print($"\n[{requestNumber}] From: {pendingRequest.Requester.Name}");
+                        print($"    Wants: {pendingRequest.OwnerItem.Name} (your item)");
+                        print($"    Offers: {pendingRequest.RequesterItem.Name} ");
+                        requestNumber++;
+                      }
+
+                      paint(ConsoleColor.DarkYellow, "\nWrite the *number* for the request you want to ACCEPt or Deny, or press enter to go back: ", "sameline");
+
+                      string inputChoice = input();
+
+                      if (string.IsNullOrWhiteSpace(inputChoice))
+                      {
+                        paint(ConsoleColor.Red, "Invalid input, Press enter to continue...");
+                        activeMenu = Menu.Trade;
+                        break;
+                      }
+
+                      if (int.TryParse(inputChoice, out int choiceIndex) && choiceIndex >= 1 && choiceIndex <= pendingRequestsToMe.Count)
+                      {
+                        TradeRequest selectedRequest = pendingRequestsToMe[choiceIndex - 1];
+                        try { Console.Clear(); } catch { print("---------------"); }
+
+                        if (selectedRequest.Status != TradeStatus.Pending || selectedRequest.Owner != activeUser)
+                        {
+                          paint(ConsoleColor.Red, "Cannot process request (either status is not pending or you are not the owner).");
+                          print("Press enter to go to previous menu...");
+                          input();
+                          activeMenu = Menu.Trade;
+                          break; ;
+                        }
+
+                        paint(ConsoleColor.DarkYellow, "\nPlease select an option:");
+                        paint(ConsoleColor.DarkYellow, "\n[1] Accept \n[2] Deny \n[3] Previous menu");
+                        paint(ConsoleColor.DarkYellow, "\n► ", "sameline");
+                        switch (input())
+                        {
+                          case "1":
+                            selectedRequest.Status = TradeStatus.Accepted;
+                            paint(ConsoleColor.Green, "Let's gooooo, Trade completeted succesfully!");
+
+                            Person requester = selectedRequest.Requester;
+
+                            activeUser.myItemsList.Remove(selectedRequest.OwnerItem);
+                            requester.myItemsList.Add(selectedRequest.OwnerItem);
+
+
+                            requester.myItemsList.Remove(selectedRequest.RequesterItem);
+                            activeUser.myItemsList.Add(selectedRequest.RequesterItem);
+
+                            Items TradeItem1 = selectedRequest.OwnerItem;
+                            Items TradeItem2 = selectedRequest.RequesterItem;
+
+                            foreach (TradeRequest pendingRequest in allRequests)
+                            {
+
+                              if (pendingRequest.Status == TradeStatus.Pending && pendingRequest != selectedRequest)
+                              {
+                                if (pendingRequest.OwnerItem == TradeItem1 || pendingRequest.OwnerItem == TradeItem2 || pendingRequest.RequesterItem == TradeItem1 || pendingRequest.RequesterItem == TradeItem2)
+                                {
+                                  pendingRequest.Status = TradeStatus.Denied;
+                                  paint(ConsoleColor.Red, $"\nConflicting request denined:  {pendingRequest.Requester.Name} for {pendingRequest.OwnerItem.Name}");
+                                }
+                              }
+                            }
+
+
+                            print("Press enter to go to previous menu...");
+                            input();
+                            break;
+
+                          case "2":
+                            selectedRequest.Status = TradeStatus.Denied;
+                            paint(ConsoleColor.Red, "Trade requst denied.");
+
+                            print("Press enter to go to previous menu...");
+                            input();
+                            break;
+
+                          case "3":
+                            break;
+
+                          default:
+                            print("Invalid selection, Press enter to go to previous menu...");
+                            input();
+                            break;
+                        }
+
+                      }
+                      else
+                      {
+                        paint(ConsoleColor.Red, "Invalid selection..");
+                        input();
+                        activeMenu = Menu.OthersRequest;
+                        break;
+                      }
+
+                      break;
+
+                    case Menu.TradeHistory:
+                      try { Console.Clear(); } catch { print("---------------"); }
+                      List<TradeRequest> approvedTrades = new List<TradeRequest>();
+                      List<TradeRequest> deniedTrades = new List<TradeRequest>();
+
+                      foreach (TradeRequest trades in allRequests)
+                      {
+                        if (trades.Status == TradeStatus.Accepted)
+                        {
+                          approvedTrades.Add(trades);
+                        }
+                        if (trades.Status == TradeStatus.Denied)
+                        {
+                          deniedTrades.Add(trades);
+                        }
+                      }
+                      int acceptedIndex = 1;
+                      paint(ConsoleColor.Green, $"\n--- [{approvedTrades.Count}] Accepted Trades ---");
+                      if (approvedTrades.Count != 0)
+                      {
+                        foreach (TradeRequest trade in approvedTrades)
+                        {
+                          print($"[{acceptedIndex}] Your {trade.RequesterItem.Name} for {trade.Owner.Name}'s, {trade.OwnerItem.Name}");
+                          acceptedIndex++;
+                        }
+
+                      }
+                      else
+                      {
+                        print("You have no accepted trades.");
+                      }
+
+
+                      paint(ConsoleColor.Red, $"\n--- [{deniedTrades.Count}] Denied Trades ---");
+                      int deniedIndex = 1;
+                      if (deniedTrades.Count != 0)
+                      {
+                        foreach (TradeRequest trade in deniedTrades)
+                        {
+                          print($"[{deniedIndex}] Your {trade.OwnerItem.Name} for {trade.Requester.Name}'s, {trade.RequesterItem.Name}");
+                          deniedIndex++;
+                        }
+
+                      }
+                      else
+                      {
+                        print("You have no denied trades.");
+                      }
+
+
+
+                      print("\nTo go to main menu press enter...");
+                      input();
+                      activeMenu = Menu.Trade;
+                      break;
+
+                    case Menu.Logout:
+                      activeMenu = Menu.Logout;
+                      break;
+
+                    default:
+                      print("\nPlease enter a valid option...");
+                      break;
+                  }
+                }
+
+              }
               break;
           }
           activeUser = null;
@@ -233,18 +703,56 @@ while (isRunning)
       break;
 
     case "2":
+      try { Console.Clear(); } catch { print("\n---------------\n"); }
       paint(ConsoleColor.DarkYellow, "Enter your Name: ", "sameline");
-      string userName = input();
+      string userName = input().Trim();
+      while (string.IsNullOrEmpty(userName))
+      {
+        print("Please enter a valid Name.");
+        paint(ConsoleColor.DarkYellow, "\nEnter your Name: ", "sameline");
+        userName = input().Trim();
+      }
+
       paint(ConsoleColor.DarkYellow, "Enter your Email: ", "sameline");
-      string userEmail = input();
+      string userEmail = input().Trim();
+      while (string.IsNullOrEmpty(userEmail) || !userEmail.Contains('@'))
+      {
+        print("Please enter a valid Email.");
+        paint(ConsoleColor.DarkGray, "Ex: name@mail.com");
+        paint(ConsoleColor.DarkYellow, "\nEnter your Email: ", "sameline");
+        userEmail = input().Trim();
+      }
+
+      foreach (Person user in allUsers)
+      {
+        if (user.Email == userEmail)
+        {
+          paint(ConsoleColor.Red, $"\nAccount already exists for {userEmail}. Please login instead.");
+          print($"This is you default password: {user.Name}");
+          print("\nPress enter to continue...");
+          input();
+          break;
+        }
+      }
       paint(ConsoleColor.DarkYellow, "Enter your Password: ", "sameline");
-      string user_password = input();
+      string user_password = input().Trim();
+      while (string.IsNullOrEmpty(userName))
+      {
+        print("Please enter a valid Password.");
+        paint(ConsoleColor.DarkYellow, "\nEnter your Password: ", "sameline");
+        user_password = input().Trim();
+      }
 
       Person newPerson = new Person(userName, userEmail, user_password);
       allUsers.Add(newPerson);
-      print($"Congurgulations! **{userName}** you have succesfully created a Trading account.");
+      paint(ConsoleColor.Green, $"Congurgulations! **{userName}** you have succesfully created a Trading account.");
       print("\nPress enter to go to login menu...");
       input();
+      break;
+
+    case "3":
+      paint(ConsoleColor.DarkYellow, "\nSaving all data before closing...\n");
+      isRunning = false;
       break;
 
 
@@ -253,6 +761,7 @@ while (isRunning)
       break;
   }
 
-  SaveUsersToCsv("users.csv");
-  SaveItemsToCsv("items.csv");
 }
+SaveUsersToCsv("users.csv");
+SaveItemsToCsv("items.csv");
+paint(ConsoleColor.Green, "All data saved. Goodbye!");
