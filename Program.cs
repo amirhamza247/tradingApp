@@ -40,20 +40,25 @@ static void paint(ConsoleColor color, string input, string newline = "newline")
 
 /////////^^^^^^^^^ MY UTILITY METHODS ^^^^^^^^^//////////
 
+
+//These is the list that keeps all my users in one plase so that it is easier to acces.
 List<Person> allUsers = new List<Person>();
+//These is the list that keeps all my requests in one plase so that it is easier to acces.
 List<TradeRequest> allRequests = new List<TradeRequest>();
 
-
+//hardcoded users to work as demo users
 allUsers.Add(new Person("amir", "amir@mail.com", "amir"));
 allUsers.Add(new Person("max", "max@mail.com", "max"));
 allUsers.Add(new Person("jakob", "jakob@mail.com", "jakob"));
 allUsers.Add(new Person("pierino", "pierino@mail.com", "pierino"));
 allUsers.Add(new Person("muhammed", "muhammed@mail.com", "muhammed"));
 
+//I load my users and items and trades form csv files here so they are in my program when i want to acces them.
 LoadUsersFromCsv("users.csv");
 LoadItemFromCsv("items.csv");
 LoadTradesFromCsv("trades.csv");
 
+//This method saves all my trades to csv whith their status.
 void SaveTradesToCsv(string path)
 {
   List<string> lines = new List<string>();
@@ -65,6 +70,7 @@ void SaveTradesToCsv(string path)
   File.WriteAllLines(path, lines);
 }
 
+//This methods helps to get a user as object by just giving the user name as string. It is a helper method for my loadfromcsv method.
 Person? GetPersonByName(string name)
 {
   foreach (Person person in allUsers)
@@ -78,28 +84,33 @@ Person? GetPersonByName(string name)
   return null;
 }
 
-
-
+//this method loads all my trades from csv file.
 void LoadTradesFromCsv(string path)
 {
+  //I check if the path exsists, if path does not exsist than program just skips the rest. 
   if (!File.Exists(path)) return;
+  //Converting each line to array
   string[] lines = File.ReadAllLines(path);
-  allRequests.Clear();
+  //Going through each line and splitting them at comma sign and saving them to a saprate array called part.
   for (int i = 1; i < lines.Length; i++)
   {
     string[] parts = lines[i].Split(',');
+    //saving parts to variables
     string requesterName = parts[0];
     string requesterItem = parts[1];
     string ownerName = parts[2];
     string ownerItem = parts[3];
     string requestStatus = parts[4];
 
+    //Because requester and owner are saved as string in csv file, here i convert them back to object.
     Person? requester = GetPersonByName(requesterName);
     Person? owner = GetPersonByName(ownerName);
 
+    //If requester or owner is empty than just skip the rest of this itiration and go to next itiration.
     if (requester is null || owner is null) continue;
 
     Items? reqItem = null;
+    //Finding the requesters item.
     foreach (Items item in requester.myItemsList)
     {
       if (requesterItem == item.Name)
@@ -111,6 +122,7 @@ void LoadTradesFromCsv(string path)
 
 
     Items? ownItem = null;
+    //Finding the owners item.
     foreach (Items item in owner.myItemsList)
     {
       if (ownerItem == item.Name)
@@ -119,21 +131,25 @@ void LoadTradesFromCsv(string path)
         break;
       }
     }
+    //If any of them are not found just skip rest of this itiration.
     if (reqItem is null || ownItem is null) continue;
 
     TradeStatus status;
+    //This statement tries to conver string to enum. and if it fails than it puts tradestatus to pedning as default to be safe.
     if (!Enum.TryParse(requestStatus, true, out status))
     {
       status = TradeStatus.Pending;
     }
 
+    //Reconstructing a historical trade request from csv file.
     TradeRequest csvTradeRequest = new TradeRequest(requester: requester, requesterItem: reqItem, owner: owner, ownerItem: ownItem);
     csvTradeRequest.Status = status;
-
+    //Adding the traderequest object to allrequests list.
     allRequests.Add(csvTradeRequest);
   }
 }
 
+//This method saves all my users to csv file.
 void SaveUsersToCsv(string path)
 {
   List<string> lines = new List<string>();
@@ -143,11 +159,11 @@ void SaveUsersToCsv(string path)
   File.WriteAllLines(path, lines);
 }
 
+//This methods loads all my users from csv to my program.
 void LoadUsersFromCsv(string path)
 {
   if (!File.Exists(path)) return;
   string[] lines = File.ReadAllLines(path);
-  allUsers.Clear();
   for (int i = 1; i < lines.Length; i++)
   {
     string[] parts = lines[i].Split(',');
@@ -158,6 +174,8 @@ void LoadUsersFromCsv(string path)
     allUsers.Add(myPerson);
   }
 }
+
+//This method saves all my items to csv file.
 void SaveItemsToCsv(string path)
 {
   List<string> lines = new List<string>();
@@ -172,13 +190,11 @@ void SaveItemsToCsv(string path)
         lines.Add($"{user.Email},{item.Name},{item.Description}");
 
       }
-
     }
-
   }
   File.WriteAllLines(path, lines);
 }
-
+//This method load all items form csv file.
 void LoadItemFromCsv(string path)
 {
   if (!File.Exists(path)) return;
@@ -203,7 +219,7 @@ void LoadItemFromCsv(string path)
 
     if (owner != null)
     {
-      Items newItem = new Items(itemName, itemDescription);
+      Items newItem = new Items(ownerEmail, itemName, itemDescription);
       owner.myItemsList.Add(newItem);
 
     }
@@ -216,14 +232,18 @@ void LoadItemFromCsv(string path)
 
 
 
-
+//Creating a person object called activeuser and setting it to null. null in this case will mean the user is loged out.
 Person activeUser = null;
 bool isRunning = true;
+//Using while loop because i want the program to keep repeating utan the user selects exit.
 while (isRunning)
 {
+  //Using try catch on console.clear so that the debugger does not crash.
   try { Console.Clear(); } catch { print("\n---------------\n"); }
-  paint(ConsoleColor.DarkYellow, "\nTo be able to trade you must have an account.\n\n[1] Login\n[2] Creat an account\n[3] Exit");
+  //Initializing the main menu.
 
+  paint(ConsoleColor.DarkYellow, "\nTo be able to trade you must have an account.\n\n[1] Login\n[2] Creat an account\n[3] Exit");
+  paint(ConsoleColor.DarkYellow, "\n► ", "sameline");
   switch (input())
   {
     case "1":
@@ -236,12 +256,16 @@ while (isRunning)
         {
           paint(ConsoleColor.DarkYellow, "\nPlease login to start trading!");
           bool isLoggedin = false;
+          //Initializing a do-while loop so that user can keep trying to login.
           do
           {
             paint(ConsoleColor.DarkYellow, "\nEmail: ", "sameline");
+            //Tolower and trim is used to make avoid case sensitivity and to remove accidental whitespaces before and after the input.
             string email = input().ToLower().Trim();
+
             while (true)
             {
+              //checks if the email contains @ sign or if the input is empty or whitespace.
               if (!email.Contains('@') || string.IsNullOrWhiteSpace(email))
               {
                 print("Please write a valid Email...");
@@ -251,6 +275,7 @@ while (isRunning)
               }
               else
               {
+                //checking the given email already exsists in my users list.
                 bool emailExsist = false;
                 foreach (Person person in allUsers)
                 {
@@ -274,6 +299,7 @@ while (isRunning)
             string password = input().ToLower().Trim();
             while (true)
             {
+              //Checks if the password input is empty or whitespace.
               if (string.IsNullOrWhiteSpace(password))
               {
                 paint(ConsoleColor.Red, "\nPlease write a valid Password...");
@@ -285,7 +311,7 @@ while (isRunning)
             }
 
             try { Console.Clear(); } catch { print("\n---------------\n"); }
-
+            //Loops through every user in my allusers list and checks if the user with given email and password exists.
             foreach (Person person in allUsers)
             {
               if (person.tryLogin(email, password))
@@ -301,16 +327,15 @@ while (isRunning)
 
               input();
             }
-          } while (!isLoggedin);
+          } while (!isLoggedin);//The do-while loop will keepgoing until the bool isloggedin is true.
         }
 
+        //If loging is succesfull then run this code.
         else
         {
-
           switch (activeUser)
           {
             case Person p:
-              print($"\n{p.Name} you have succecfully loged in your account!\n");
               {
                 Menu activeMenu = new Menu();
                 bool personLogedin = true;
@@ -318,12 +343,13 @@ while (isRunning)
                 {
                   switch (activeMenu)
                   {
+                    //loged in menu
                     case Menu.Main:
                       try { Console.Clear(); } catch { print("---------------"); }
                       paint(ConsoleColor.DarkYellow, $"\n-----Welcome to Trade World-----");
-                      paint(ConsoleColor.DarkYellow, "_____________________\nMain menu:\n[1] Show my Items\n[2] Upload Item\n[3] Trade\n[4] Logout\n_____________________\n");
+                      paint(ConsoleColor.DarkYellow, "_____________________\nMain menu:\n[1] My Inventory\n[2] Upload Item\n[3] Trade\n[4] Logout\n_____________________\n");
                       paint(ConsoleColor.DarkYellow, "\n► ", "sameline");
-
+                      //switch-case that with the help of enum menu controlls the flow of navigation in menu.
                       switch (input())
                       {
                         case "1":
@@ -349,7 +375,7 @@ while (isRunning)
 
                       }
                       break;
-
+                    //This case shows my items that i have in my inventory.
                     case Menu.ShowMyItems:
                       try { Console.Clear(); } catch { print("---------------"); }
 
@@ -369,7 +395,7 @@ while (isRunning)
                       input();
                       activeMenu = Menu.Main;
                       break;
-
+                    //This case saves new items to my list.
                     case Menu.UploadItem:
                       try { Console.Clear(); } catch { print("---------------"); }
                       Console.Write("\nWrite the name of your item: ");
@@ -384,7 +410,7 @@ while (isRunning)
                       }
                       else
                       {
-                        Items newItem = new Items(itemName, itemDescription);
+                        Items newItem = new Items(activeUser.Email, itemName, itemDescription);
                         activeUser.myItemsList.Add(newItem);
                         Console.Write("\nItem ");
                         paint(ConsoleColor.Green, $"{newItem.Name}", "sameline");
@@ -397,7 +423,7 @@ while (isRunning)
                       input();
                       activeMenu = Menu.Main;
                       break;
-
+                    //This case "trade" has a sub menu That defines the logic for trading and more.
                     case Menu.Trade:
                       try { Console.Clear(); } catch { print("---------------"); }
                       paint(ConsoleColor.DarkYellow, "\n--- Trade Menu ---\n\n[1] Show all items avalible for trade \n[2] My requests \n[3] Others requests \n[4] Trade history \n[5] Back to Main Menu\n  ");
@@ -434,6 +460,7 @@ while (isRunning)
                           break;
                       }
                       break;
+                    //In this case user can see all the items avalible for trade inclusive users own inventory.
                     case Menu.TradeMarket:
                       try { Console.Clear(); } catch { print("---------------"); }
                       paint(ConsoleColor.DarkYellow, "\nItems avaliable for trading in trade world:");
@@ -467,7 +494,7 @@ while (isRunning)
                         }
 
                       }
-
+                      //Here is a bunch of different user validations for different senarios.
                       userIndex = tradeableUsers.Count;
                       if (tradeableUsers.Count == 0 && activeUser.myItemsList.Count == 0)
                       { print("There are no items currently avalible for trade."); }
@@ -489,7 +516,7 @@ while (isRunning)
                         break;
                       }
 
-
+                      //Here I have the logic behid selecting a person and i item i want to trade.
                       paint(ConsoleColor.DarkYellow, "\n--- Trade Selection --\n");
                       paint(ConsoleColor.DarkYellow, $"Write **number** for the person you want to trade with (1-{userIndex}): ", "sameline");
                       if (!int.TryParse(input(), out int targetUserNumber) || targetUserNumber > userIndex || targetUserNumber < 1)
@@ -506,7 +533,9 @@ while (isRunning)
                       Person targetOwner = tradeableUsers[targetUserNumber - 1];
 
                       int maxItemIndex = targetOwner.myItemsList.Count;
-                      paint(ConsoleColor.DarkYellow, $"\nYou selected {targetOwner.Name}'s inventory.\nNow, which of their items (1-{maxItemIndex}) do you want to trade for:  ", "sameline");
+                      Console.Write("\nYou selected:");
+                      paint(ConsoleColor.DarkYellow, $" {targetOwner.Name}'s inventory");
+                      paint(ConsoleColor.DarkYellow, $"\nNow, which of their items (1-{maxItemIndex}) do you want to trade for: ", "sameline");
                       if (!int.TryParse(input(), out int targetItemIndex) || targetItemIndex < 1 || targetItemIndex > maxItemIndex)
                       {
                         paint(ConsoleColor.Red, "\nInvalid item number.");
@@ -517,9 +546,9 @@ while (isRunning)
                       }
                       Items targetItem = targetOwner.myItemsList[targetItemIndex - 1];
 
-                      Console.Write("\nYou selected :");
-                      paint(ConsoleColor.DarkYellow, $"{targetItem.Name}", "sameline");
-                      paint(ConsoleColor.DarkYellow, $"\n\nNow, which of you items will you offer? Enter 1-{activeUser.myItemsList.Count}: ");
+                      Console.Write("\nYou selected:");
+                      paint(ConsoleColor.DarkYellow, $" {targetItem.Name}", "sameline");
+                      paint(ConsoleColor.DarkYellow, $"\n\nNow, which of you items will you offer? Enter 1-{activeUser.myItemsList.Count}: ", "sameline");
 
                       if (!int.TryParse(input(), out int offerIndex) || offerIndex < 1 || offerIndex > activeUser.myItemsList.Count)
                       {
@@ -549,7 +578,7 @@ while (isRunning)
                       input();
                       activeMenu = Menu.Trade;
                       break;
-
+                    //In this case i have the logic behid viewing my out going requests for trading items.
                     case Menu.MyRequests:
                       try { Console.Clear(); } catch { print("---------------"); }
                       List<TradeRequest> myPendingRequests = new List<TradeRequest>();
@@ -581,7 +610,7 @@ while (isRunning)
                       input();
                       activeMenu = Menu.Trade;
                       break;
-
+                    //In this case i have logic for viewing other user request to me. 
                     case Menu.OthersRequest:
                       try { Console.Clear(); } catch { print("---------------"); }
 
@@ -612,7 +641,7 @@ while (isRunning)
                         print($"    Offers: {pendingRequest.RequesterItem.Name} ");
                         requestNumber++;
                       }
-
+                      //Here is the logic for selecting a trade that i want to accept or deny.
                       paint(ConsoleColor.DarkYellow, "\nWrite the *number* for the request you want to ACCEPt or Deny, or press enter to go back: ", "sameline");
 
                       string inputChoice = input();
@@ -641,6 +670,7 @@ while (isRunning)
                         paint(ConsoleColor.DarkYellow, "\nPlease select an option:");
                         paint(ConsoleColor.DarkYellow, "\n[1] Accept \n[2] Deny \n[3] Previous menu");
                         paint(ConsoleColor.DarkYellow, "\n► ", "sameline");
+                        //Here the actual swaping of items happen.
                         switch (input())
                         {
                           case "1":
@@ -656,9 +686,15 @@ while (isRunning)
                             requester.myItemsList.Remove(selectedRequest.RequesterItem);
                             activeUser.myItemsList.Add(selectedRequest.RequesterItem);
 
+                            //updating the oneritems owner to requester.
+                            selectedRequest.OwnerItem.OwnerEmail = requester.Email;
+                            //updating the requesteritems owner to activeuser.
+                            selectedRequest.RequesterItem.OwnerEmail = activeUser.Email;
+
+
                             Items TradeItem1 = selectedRequest.OwnerItem;
                             Items TradeItem2 = selectedRequest.RequesterItem;
-
+                            //Here i deny all the other conflicting requests regarding the current items.
                             foreach (TradeRequest pendingRequest in allRequests)
                             {
 
@@ -704,7 +740,7 @@ while (isRunning)
                       }
 
                       break;
-
+                    //Here is the logic for viewing my trade history.
                     case Menu.TradeHistory:
                       try { Console.Clear(); } catch { print("---------------"); }
                       List<TradeRequest> approvedTrades = new List<TradeRequest>();
@@ -721,14 +757,13 @@ while (isRunning)
                           deniedTrades.Add(trades);
                         }
                       }
-                      int acceptedIndex = 1;
                       paint(ConsoleColor.Green, $"\n--- [{approvedTrades.Count}] Accepted Trades ---");
                       if (approvedTrades.Count != 0)
                       {
                         foreach (TradeRequest trade in approvedTrades)
                         {
-                          print($"[{acceptedIndex}] Your {trade.RequesterItem.Name} for {trade.Owner.Name}'s, {trade.OwnerItem.Name}");
-                          acceptedIndex++;
+                          print($"\nTRADE: [{trade.OwnerItem.Name}] for [{trade.RequesterItem.Name}]");
+
                         }
 
                       }
@@ -739,13 +774,12 @@ while (isRunning)
 
 
                       paint(ConsoleColor.Red, $"\n--- [{deniedTrades.Count}] Denied Trades ---");
-                      int deniedIndex = 1;
                       if (deniedTrades.Count != 0)
                       {
                         foreach (TradeRequest trade in deniedTrades)
                         {
-                          print($"[{deniedIndex}] Your {trade.OwnerItem.Name} for {trade.Requester.Name}'s, {trade.RequesterItem.Name}");
-                          deniedIndex++;
+                          print($"\nTRADE: [{trade.OwnerItem.Name}] for [{trade.RequesterItem.Name}]");
+
                         }
 
                       }
@@ -774,6 +808,7 @@ while (isRunning)
               }
               break;
           }
+          //Here our user logs out.
           activeUser = null;
           loginRunning = false;
 
@@ -782,7 +817,7 @@ while (isRunning)
       }
 
       break;
-
+    //Here the user is asked to creat an acount if the user has no account for trading.
     case "2":
       try { Console.Clear(); } catch { print("\n---------------\n"); }
       paint(ConsoleColor.DarkYellow, "\nEnter your Name: ", "sameline");
@@ -843,6 +878,7 @@ while (isRunning)
   }
 
 }
+//Here everthing is saved to csv. it is at the end of program because we want everthing to be saved at its final form. 
 SaveUsersToCsv("users.csv");
 SaveItemsToCsv("items.csv");
 SaveTradesToCsv("trades.csv");

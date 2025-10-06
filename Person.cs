@@ -68,9 +68,4 @@ public class Person
     return Email;
   }
 
-  public void ShowOutgoingRequests()
-  {
-    return;
-  }
-
 }
