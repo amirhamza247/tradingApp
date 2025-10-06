@@ -43,15 +43,96 @@ static void paint(ConsoleColor color, string input, string newline = "newline")
 List<Person> allUsers = new List<Person>();
 List<TradeRequest> allRequests = new List<TradeRequest>();
 
-LoadUsersFromCsv("users.csv");
-LoadItemFromCsv("items.csv");
-
 
 allUsers.Add(new Person("amir", "amir@mail.com", "amir"));
 allUsers.Add(new Person("max", "max@mail.com", "max"));
 allUsers.Add(new Person("jakob", "jakob@mail.com", "jakob"));
 allUsers.Add(new Person("pierino", "pierino@mail.com", "pierino"));
 allUsers.Add(new Person("muhammed", "muhammed@mail.com", "muhammed"));
+
+LoadUsersFromCsv("users.csv");
+LoadItemFromCsv("items.csv");
+LoadTradesFromCsv("trades.csv");
+
+void SaveTradesToCsv(string path)
+{
+  List<string> lines = new List<string>();
+  lines.Add("RequesterName,RequesterItem,OwnerName,OwnerItem,TradeStatus");
+  foreach (TradeRequest request in allRequests)
+  {
+    lines.Add($"{request.Requester.Name},{request.RequesterItem.Name},{request.Owner.Name},{request.OwnerItem.Name},{request.Status}");
+  }
+  File.WriteAllLines(path, lines);
+}
+
+Person? GetPersonByName(string name)
+{
+  foreach (Person person in allUsers)
+  {
+    if (person.Name == name)
+    {
+      return person;
+
+    }
+  }
+  return null;
+}
+
+
+
+void LoadTradesFromCsv(string path)
+{
+  if (!File.Exists(path)) return;
+  string[] lines = File.ReadAllLines(path);
+  allRequests.Clear();
+  for (int i = 1; i < lines.Length; i++)
+  {
+    string[] parts = lines[i].Split(',');
+    string requesterName = parts[0];
+    string requesterItem = parts[1];
+    string ownerName = parts[2];
+    string ownerItem = parts[3];
+    string requestStatus = parts[4];
+
+    Person? requester = GetPersonByName(requesterName);
+    Person? owner = GetPersonByName(ownerName);
+
+    if (requester is null || owner is null) continue;
+
+    Items? reqItem = null;
+    foreach (Items item in requester.myItemsList)
+    {
+      if (requesterItem == item.Name)
+      {
+        reqItem = item;
+        break;
+      }
+    }
+
+
+    Items? ownItem = null;
+    foreach (Items item in owner.myItemsList)
+    {
+      if (ownerItem == item.Name)
+      {
+        ownItem = item;
+        break;
+      }
+    }
+    if (reqItem is null || ownItem is null) continue;
+
+    TradeStatus status;
+    if (!Enum.TryParse(requestStatus, true, out status))
+    {
+      status = TradeStatus.Pending;
+    }
+
+    TradeRequest csvTradeRequest = new TradeRequest(requester: requester, requesterItem: reqItem, owner: owner, ownerItem: ownItem);
+    csvTradeRequest.Status = status;
+
+    allRequests.Add(csvTradeRequest);
+  }
+}
 
 void SaveUsersToCsv(string path)
 {
@@ -115,7 +196,7 @@ void LoadItemFromCsv(string path)
     {
       if (person.getEmail() == ownerEmail)
       {
-        owner = person as Person;
+        owner = person;
         break;
       }
     }
@@ -704,20 +785,20 @@ while (isRunning)
 
     case "2":
       try { Console.Clear(); } catch { print("\n---------------\n"); }
-      paint(ConsoleColor.DarkYellow, "Enter your Name: ", "sameline");
+      paint(ConsoleColor.DarkYellow, "\nEnter your Name: ", "sameline");
       string userName = input().Trim();
       while (string.IsNullOrEmpty(userName))
       {
-        print("Please enter a valid Name.");
+        print("\nPlease enter a valid Name.");
         paint(ConsoleColor.DarkYellow, "\nEnter your Name: ", "sameline");
         userName = input().Trim();
       }
 
-      paint(ConsoleColor.DarkYellow, "Enter your Email: ", "sameline");
+      paint(ConsoleColor.DarkYellow, "\nEnter your Email: ", "sameline");
       string userEmail = input().Trim();
       while (string.IsNullOrEmpty(userEmail) || !userEmail.Contains('@'))
       {
-        print("Please enter a valid Email.");
+        print("\nPlease enter a valid Email.");
         paint(ConsoleColor.DarkGray, "Ex: name@mail.com");
         paint(ConsoleColor.DarkYellow, "\nEnter your Email: ", "sameline");
         userEmail = input().Trim();
@@ -734,18 +815,18 @@ while (isRunning)
           break;
         }
       }
-      paint(ConsoleColor.DarkYellow, "Enter your Password: ", "sameline");
+      paint(ConsoleColor.DarkYellow, "\nEnter your Password: ", "sameline");
       string user_password = input().Trim();
       while (string.IsNullOrEmpty(userName))
       {
-        print("Please enter a valid Password.");
+        print("\nPlease enter a valid Password.");
         paint(ConsoleColor.DarkYellow, "\nEnter your Password: ", "sameline");
         user_password = input().Trim();
       }
 
       Person newPerson = new Person(userName, userEmail, user_password);
       allUsers.Add(newPerson);
-      paint(ConsoleColor.Green, $"Congurgulations! **{userName}** you have succesfully created a Trading account.");
+      paint(ConsoleColor.Green, $"\nCongurgulations! {userName} you have succesfully created a Trading account.");
       print("\nPress enter to go to login menu...");
       input();
       break;
@@ -757,11 +838,12 @@ while (isRunning)
 
 
     default:
-      print("Please enter a valid option...");
+      print("\nPlease enter a valid option...");
       break;
   }
 
 }
 SaveUsersToCsv("users.csv");
 SaveItemsToCsv("items.csv");
+SaveTradesToCsv("trades.csv");
 paint(ConsoleColor.Green, "All data saved. Goodbye!");
