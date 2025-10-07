@@ -36,14 +36,12 @@ public class Items
   /// 
 
 
-  public string OwnerEmail;
   public string Name;
   public string Description;
 
 
   public Items(string ownerEmail, string name, string description)
   {
-    OwnerEmail = ownerEmail;
     Name = name;
     Description = description;
 

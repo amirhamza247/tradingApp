@@ -686,11 +686,6 @@ while (isRunning)
                             requester.myItemsList.Remove(selectedRequest.RequesterItem);
                             activeUser.myItemsList.Add(selectedRequest.RequesterItem);
 
-                            //updating the oneritems owner to requester.
-                            selectedRequest.OwnerItem.OwnerEmail = requester.Email;
-                            //updating the requesteritems owner to activeuser.
-                            selectedRequest.RequesterItem.OwnerEmail = activeUser.Email;
-
 
                             Items TradeItem1 = selectedRequest.OwnerItem;
                             Items TradeItem2 = selectedRequest.RequesterItem;
