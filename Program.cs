@@ -47,27 +47,38 @@ List<Person> allUsers = new List<Person>();
 List<TradeRequest> allRequests = new List<TradeRequest>();
 
 //hardcoded users to work as demo users
-allUsers.Add(new Person("amir", "amir@mail.com", "amir"));
-allUsers.Add(new Person("max", "max@mail.com", "max"));
-allUsers.Add(new Person("jakob", "jakob@mail.com", "jakob"));
-allUsers.Add(new Person("pierino", "pierino@mail.com", "pierino"));
-allUsers.Add(new Person("muhammed", "muhammed@mail.com", "muhammed"));
+// allUsers.Add(new Person("amir", "amir@mail.com", "amir"));
+// allUsers.Add(new Person("max", "max@mail.com", "max"));
+// allUsers.Add(new Person("jakob", "jakob@mail.com", "jakob"));
+// allUsers.Add(new Person("pierino", "pierino@mail.com", "pierino"));
+// allUsers.Add(new Person("muhammed", "muhammed@mail.com", "muhammed"));
 
 //I load my users and items and trades form csv files here so they are in my program when i want to acces them.
 LoadUsersFromCsv("users.csv");
 LoadItemFromCsv("items.csv");
 LoadTradesFromCsv("trades.csv");
 
+
 //This method saves all my trades to csv whith their status.
-void SaveTradesToCsv(string path)
+void SaveTradesToCsv(string path, string mode = "overwrite")
 {
   List<string> lines = new List<string>();
-  lines.Add("RequesterName,RequesterItem,OwnerName,OwnerItem,TradeStatus");
+  // lines.Add("RequesterName,RequesterItem,OwnerName,OwnerItem,TradeStatus");
+
   foreach (TradeRequest request in allRequests)
   {
     lines.Add($"{request.Requester.Name},{request.RequesterItem.Name},{request.Owner.Name},{request.OwnerItem.Name},{request.Status}");
   }
-  File.WriteAllLines(path, lines);
+  if (mode == "append")
+  {
+    File.AppendAllLines(path, lines);
+
+  }
+  else
+  {
+    File.WriteAllLines(path, lines);
+
+  }
 }
 
 //This methods helps to get a user as object by just giving the user name as string. It is a helper method for my loadfromcsv method.
@@ -91,8 +102,9 @@ void LoadTradesFromCsv(string path)
   if (!File.Exists(path)) return;
   //Converting each line to array
   string[] lines = File.ReadAllLines(path);
+
   //Going through each line and splitting them at comma sign and saving them to a saprate array called part.
-  for (int i = 1; i < lines.Length; i++)
+  for (int i = 0; i < lines.Length; i++)
   {
     string[] parts = lines[i].Split(',');
     //saving parts to variables
@@ -102,12 +114,14 @@ void LoadTradesFromCsv(string path)
     string ownerItem = parts[3];
     string requestStatus = parts[4];
 
+
     //Because requester and owner are saved as string in csv file, here i convert them back to object.
     Person? requester = GetPersonByName(requesterName);
     Person? owner = GetPersonByName(ownerName);
 
     //If requester or owner is empty than just skip the rest of this itiration and go to next itiration.
     if (requester is null || owner is null) continue;
+
 
     Items? reqItem = null;
     //Finding the requesters item.
@@ -146,17 +160,18 @@ void LoadTradesFromCsv(string path)
     csvTradeRequest.Status = status;
     //Adding the traderequest object to allrequests list.
     allRequests.Add(csvTradeRequest);
+
   }
+
 }
 
 //This method saves all my users to csv file.
 void SaveUsersToCsv(string path)
 {
   List<string> lines = new List<string>();
-  lines.Add("Name,Email,Password");
   foreach (Person currentPerson in allUsers)
   { lines.Add($"{currentPerson.Name},{currentPerson.Email},{currentPerson._Password}"); }
-  File.WriteAllLines(path, lines);
+  File.AppendAllLines(path, lines);
 }
 
 //This methods loads all my users from csv to my program.
@@ -164,7 +179,8 @@ void LoadUsersFromCsv(string path)
 {
   if (!File.Exists(path)) return;
   string[] lines = File.ReadAllLines(path);
-  for (int i = 1; i < lines.Length; i++)
+  allUsers.Clear();
+  for (int i = 0; i < lines.Length; i++)
   {
     string[] parts = lines[i].Split(',');
     string name = parts[0];
@@ -548,7 +564,7 @@ while (isRunning)
 
                       Console.Write("\nYou selected:");
                       paint(ConsoleColor.DarkYellow, $" {targetItem.Name}", "sameline");
-                      paint(ConsoleColor.DarkYellow, $"\n\nNow, which of you items will you offer? Enter 1-{activeUser.myItemsList.Count}: ", "sameline");
+                      paint(ConsoleColor.DarkYellow, $"\n\nNow, which of your items will you offer? Enter 1-{activeUser.myItemsList.Count}: ", "sameline");
 
                       if (!int.TryParse(input(), out int offerIndex) || offerIndex < 1 || offerIndex > activeUser.myItemsList.Count)
                       {
@@ -570,7 +586,7 @@ while (isRunning)
                       Console.Write("from");
                       paint(ConsoleColor.DarkYellow, $" [{targetOwner.Name}]");
 
-
+                      SaveTradesToCsv("trades.csv");
 
 
 
@@ -724,6 +740,7 @@ while (isRunning)
                             input();
                             break;
                         }
+                        SaveTradesToCsv("trades.csv");
 
                       }
                       else
@@ -741,24 +758,37 @@ while (isRunning)
                       List<TradeRequest> approvedTrades = new List<TradeRequest>();
                       List<TradeRequest> deniedTrades = new List<TradeRequest>();
 
-                      foreach (TradeRequest trades in allRequests)
+                      foreach (TradeRequest trade in allRequests)
                       {
-                        if (trades.Status == TradeStatus.Accepted)
+
+                        if (trade.Status == TradeStatus.Accepted)
                         {
-                          approvedTrades.Add(trades);
+                          if (trade.Owner.Name == activeUser.Name || trade.Requester.Name == activeUser.Name)
+                          {
+                            approvedTrades.Add(trade);
+
+                          }
                         }
-                        if (trades.Status == TradeStatus.Denied)
+                        if (trade.Status == TradeStatus.Denied)
                         {
-                          deniedTrades.Add(trades);
+                          if (trade.Owner.Name == activeUser.Name || trade.Requester.Name == activeUser.Name)
+                          {
+                            deniedTrades.Add(trade);
+
+                          }
                         }
                       }
+
+
                       paint(ConsoleColor.Green, $"\n--- [{approvedTrades.Count}] Accepted Trades ---");
                       if (approvedTrades.Count != 0)
                       {
                         foreach (TradeRequest trade in approvedTrades)
                         {
-                          print($"\nTRADE: [{trade.OwnerItem.Name}] for [{trade.RequesterItem.Name}]");
-
+                          if (trade.Owner.Name == activeUser.Name || trade.Requester.Name == activeUser.Name)
+                          {
+                            print($"\nTRADE: [{trade.RequesterItem.Name}] for [{trade.OwnerItem.Name}]");
+                          }
                         }
 
                       }
@@ -773,8 +803,10 @@ while (isRunning)
                       {
                         foreach (TradeRequest trade in deniedTrades)
                         {
-                          print($"\nTRADE: [{trade.OwnerItem.Name}] for [{trade.RequesterItem.Name}]");
-
+                          if (trade.Owner.Name == activeUser.Name || trade.Requester.Name == activeUser.Name)
+                          {
+                            print($"\nTRADE: [{trade.OwnerItem.Name}] for [{trade.RequesterItem.Name}]");
+                          }
                         }
 
                       }
@@ -785,7 +817,7 @@ while (isRunning)
 
 
 
-                      print("\nTo go to main menu press enter...");
+                      print("\n\n\nTo go to main menu press enter...");
                       input();
                       activeMenu = Menu.Trade;
                       break;
@@ -795,7 +827,7 @@ while (isRunning)
                       break;
 
                     default:
-                      print("\nPlease enter a valid option...");
+                      print("\n\nPlease enter a valid option...");
                       break;
                   }
                 }
@@ -873,8 +905,10 @@ while (isRunning)
   }
 
 }
+
+
 //Here everthing is saved to csv. it is at the end of program because we want everthing to be saved at its final form. 
 SaveUsersToCsv("users.csv");
 SaveItemsToCsv("items.csv");
-SaveTradesToCsv("trades.csv");
+SaveTradesToCsv("trades.csv", "overwrite");
 paint(ConsoleColor.Green, "All data saved. Goodbye!");

@@ -1,1 +1,5 @@
-RequesterName,RequesterItem,OwnerName,OwnerItem,TradeStatus
+amir,iphone 4,jakob,veggies,Accepted
+amir,iphone 4,jakob,veggies,Accepted
+jakob,veggies,amir,iphone 4,Accepted
+max,silver ring,amir,banana,Accepted
+amir,banana,max,lenovo laptop,Denied
